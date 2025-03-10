@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload to Cloudinary</title>
+</head>
+<body>
+    <h2>Upload Image to Cloudinary</h2>
+    <input type="file" id="imageUpload" />
+    <button onclick="uploadImage()">Upload</button>
+    <p id="uploadStatus"></p>
+    <img id="uploadedImage" width="300" style="display:none;" />
+
+    <script>
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageUpload');
+            const statusText = document.getElementById('uploadStatus');
+            const imagePreview = document.getElementById('uploadedImage');
+
+            if (!fileInput.files.length) {
+                statusText.innerText = "Please select an image.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'my_image'); // Change this!
+
+            try {
+                statusText.innerText = "Uploading...";
+                const response = await fetch('https://api.cloudinary.com/v1_1/dmzw8vyrq/image/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.secure_url) {
+                    statusText.innerText = "Upload Successful!";
+                    imagePreview.src = data.secure_url;
+                    imagePreview.style.display = 'block';
+                } else {
+                    statusText.innerText = "Upload failed!";
+                }
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "Error uploading image.";
+            }
+        }
+    </script>
+</body>
+</html>
