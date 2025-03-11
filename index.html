@@ -10,47 +10,82 @@
 <body>
     <div class="container">
     <h2>Upload Image project</h2>
-    <input type="file" id="imageUpload" />
-    <button onclick="uploadImage()">Upload</button>
-    <p id="uploadStatus"></p>
-    <img id="uploadedImage" width="300" style="display:none;" />
+    <input type="file" id="imageUpload" multiple />
+<button onclick="uploadImages()">Upload</button>
+<p id="uploadStatus"></p>
+<progress id="progressBar" value="0" max="100" style="width: 100%; display: none;"></progress>
+<div id="imageContainer"></div>
     </div>
     <script>
-        async function uploadImage() {
-            const fileInput = document.getElementById('imageUpload');
-            const statusText = document.getElementById('uploadStatus');
-            const imagePreview = document.getElementById('uploadedImage');
+        async function uploadImages() {
+    const fileInput = document.getElementById('imageUpload');
+    const statusText = document.getElementById('uploadStatus');
+    const imageContainer = document.getElementById('imageContainer');
+    const progressBar = document.getElementById('progressBar');
 
-            if (!fileInput.files.length) {
-                statusText.innerText = "Please select an image.";
-                return;
+    if (!fileInput.files.length) {
+        statusText.innerText = "Please select images.";
+        return;
+    }
+
+    progressBar.style.display = "block"; // Show progress bar
+    progressBar.value = 0;
+
+    const files = fileInput.files;
+    let uploadedCount = 0;
+
+    for (const file of files) {
+        await uploadSingleImage(file, files.length, uploadedCount, progressBar);
+        uploadedCount++;
+        progressBar.value = (uploadedCount / files.length) * 100; // Update progress
+    }
+
+    statusText.innerText = "Upload complete!";
+    progressBar.style.display = "none"; // Hide progress bar after upload
+}
+
+// ✅ Function to upload a single image with progress tracking
+function uploadSingleImage(file, totalFiles, uploadedCount, progressBar) {
+    return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'my_image'); // Change this!
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://api.cloudinary.com/v1_1/dmzw8vyrq/image/upload', true);
+
+        // 🔥 Track upload progress
+        xhr.upload.onprogress = function (event) {
+            if (event.lengthComputable) {
+                const fileProgress = (event.loaded / event.total) * 100;
+                const totalProgress = ((uploadedCount + fileProgress / 100) / totalFiles) * 100;
+                progressBar.value = totalProgress; // Update progress bar
             }
+        };
 
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'my_image'); // Change this!
-
-            try {
-                statusText.innerText = "Uploading...";
-                const response = await fetch('https://api.cloudinary.com/v1_1/dmzw8vyrq/image/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
                 if (data.secure_url) {
-                    statusText.innerText = "Upload Successful!";
-                    imagePreview.src = data.secure_url;
-                    imagePreview.style.display = 'block';
-                } else {
-                    statusText.innerText = "Upload failed!";
+                    const img = document.createElement('img');
+                    img.src = data.secure_url;
+                    img.width = 200;
+                    document.getElementById('imageContainer').appendChild(img);
                 }
-            } catch (error) {
-                console.error(error);
-                statusText.innerText = "Error uploading image.";
+                resolve();
+            } else {
+                reject("Upload failed");
             }
-        }
+        };
+
+        xhr.onerror = function () {
+            reject("Error uploading image");
+        };
+
+        xhr.send(formData);
+    });
+}
+
     </script>
 </body>
 </html>
