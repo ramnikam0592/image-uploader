@@ -4,14 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Upload to Cloudinary</title>
+    <link rel="stylesheet" href="style.css">
+ 
 </head>
 <body>
-    <h2>Upload Image to Cloudinary</h2>
+    <div class="container">
+    <h2>Upload Image project</h2>
     <input type="file" id="imageUpload" />
     <button onclick="uploadImage()">Upload</button>
     <p id="uploadStatus"></p>
     <img id="uploadedImage" width="300" style="display:none;" />
-
+    </div>
     <script>
         async function uploadImage() {
             const fileInput = document.getElementById('imageUpload');
